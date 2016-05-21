@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+	<title>Super Shooter</title>
+	<script>
+		window.addEventListener ("load", function () {
+			var _duckBack = [] ;
+			var _duckFor = [] ;
+			for (var i = 0; i < 5; i++) {
+				_duckBack.push ("gfx/back"+i.toString()+".png") ;
+				_duckFor.push ("gfx/for"+i.toString()+".png") ;
+			}
+			
+			var Dir = {
+				_forward: 0,
+				_backward: 1,
+				_kill: 2, 
+				_goon: 3,
+				_stop: 4
+			} ;
+			
+			// Setup lost screen
+			var _loseText = get("#loseText") ;
+			_loseText.style.top = window.innerHeight / 2 + "px" ;
+			var _tryagain = get("#tryagain") ;
+			_tryagain.style.top = window.innerHeight / 2 + "px"
+			var _onmenu = get("#onMenu") ;
+			_tryagain.addEventListener ("click", function () {
+				duckRespawn () ;
+				_onmenu.style.visibility = "hidden" ;
+			}, false) ;
+			
+			/////////////////////////////////////////////////////////////////////////
+			// Player
+			var _score = 0 ;
+			var _ducksA = 0 ;
+			/////////////////////////////////////////////////////////////////////////
+			
+			var _gameField = get("#gameField") ;
+			_gameField.style.width = window.innerWidth - 4 + "px" ;
+			_gameField.style.height = window.innerHeight - 4 + "px";
+			
+			var _infobar = get("#infobar") ;
+			_infobar.style.width = window.innerWidth - 4 + "px" ;
+			
+			window.addEventListener ("resize", function () {
+				_gameField.style.width = window.innerWidth - 4 + "px" ;
+				_gameField.style.height = window.innerHeight - 4 + "px" ;
+				_infobar.style.width = window.innerWidth - 4 + "px" ;
+			}, false) ;
+			
+			// Importatnt variables
+			var _duckDir = 0 ;
+			var _duckState = Dir._goon ;
+			var _dx = 100, _dy = 200 ;
+			var _duckAnimFrame = 0 ;
+			var _duck = get("#duckBox") ;
+			var _viewfinder = get("#viewfinder") ;
+			_viewfinder.src = "gfx/viewfinder.png" ;
+			
+			_gameField.addEventListener ("mousemove", function (_event) {
+				_viewfinder.style.top = _event.clientY - 40 + "px" ;
+				_viewfinder.style.left = _event.clientX - 40 + "px";
+			}, false) ;
+			
+			_gameField.addEventListener ("click", function (e) {
+				if (e.clientX >= _dx && e.clientX <= (_dx + 66) && e.clientY >= _dy && e.clientY <= (_dy + 88)) {
+					_duckState = Dir._kill ;
+					_score++ ;
+				}
+			}, false) ;
+			
+			function animDuck () {
+				if (_duckAnimFrame > 4) _duckAnimFrame = 0 ;
+				if (_duckDir == Dir._forward) _duck.src = _duckFor[_duckAnimFrame] ;
+				else _duck.src = _duckBack[_duckAnimFrame] ;
+				if (_duckState == Dir._kill) {
+					if (animDuckKill() == "alreadykilled") duckRespawn() ;
+				}
+				else if (_duckState == Dir._goon) animDuckFly () ;
+				else {}
+				_duck.style.top = _dy + "px" ;
+				_duck.style.left = _dx + "px";
+				_duckAnimFrame++ ;
+			}
+			
+			function duckRespawn () {
+				_duckState = Dir._goon ;
+				_dx = 2 ;
+				_ducksA++ ;
+				_dy = parseInt (Math.random() * window.innerHeight) + 2 ;
+				if ((_dy + 88) > window.innerHeight) duckRespawn();
+			}
+			
+			function animDuckFly () {
+				if (_dx > window.innerWidth) {
+					_duckState = Dir._stop ;
+					_ducksA = 0 ;
+					_score = 0 ;
+					_onmenu.style.visibility = "visible" ;
+				}
+				else _dx += 10 + _ducksA ;
+			}
+			
+			function animDuckKill () {
+				if (_dy < window.innerHeight) {
+					_dy+= 30 ;
+					return "notkilledyet";
+				}
+				else { 
+					_duckState = Dir._goon ;
+					return "alreadykilled";
+				}
+			}
+		
+			setInterval (function () {
+				_infobar.innerHTML = "Your score: " + _score ;
+				animDuck() ;
+			}, 60) ;
+			
+			function get (_filter) {
+				// Check for what we are looking for
+				if (_filter.toString()[0] == "#") return document.getElementById (_filter.substr(1,_filter.length-1)) ;
+				else if (_filter.toString()[0] == ".") return document.getElementsByClassName (_filter.substr(1,_filter.length-1)) ;
+				else if (_filter == "body") return document.body ;
+				else return document.getElementsByTagName (_filter.toString()) ;
+			}
+		}, false) ;
+	</script>
+	<style>
+		html, body {
+			margin: 0px ;
+			padding: 0px ;
+			color: white ;
+			font-family: Calibri, Arial Narrow ;
+			font-size: 18px ;
+		}
+		#viewfinder {
+			position: absolute ;
+			width: 80px ;
+			height: 80px ;
+		}
+		#duckBox {
+			position: absolute ;
+			width: 68px;
+			height: 88px ;
+			background-repeat: no-repeat ;
+		}
+		#gameField {
+			background: rgb(191,187,175) ;
+			border: 2px solid black ;
+		}
+		#infobar {
+			height: 30px ;
+			position: absolute ;
+			bottom: 0px ;
+			left: 2px ;
+			background: rgba(128,128,128,0.5) ;
+			margin: 0px ;
+			border-top: 2px solid red ;
+			text-align: center ;
+		}
+		#onMenu {
+			width: 100% ;
+			height: 100% ;
+			background: rgba(0,0,0,0.6) ;
+			position: absolute ;
+			top: 0px ;
+			left: 0px ;
+			text-align: center ;
+			visibility: hidden ;
+		}
+		#loseText {
+			position: relative ;
+		}
+		#tryagain {
+			position: relative ;
+		}
+	</style>
+</head>
+<body>
+	<div id="gameField">
+		<img id="duckBox" />
+		<img id="viewfinder" />
+	</div>
+	<div id="infobar">Your score</div>
+	<div id="onMenu">
+		<p id="loseText">You Lose</p>
+		<button id="tryagain">Click here if you want to try again.</button>
+	</div>
+</body>
+</html>
